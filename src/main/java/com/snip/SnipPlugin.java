@@ -17,7 +17,7 @@ import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Chat Snipper"
+	name = "Chat Transcripts"
 )
 public class SnipPlugin extends Plugin
 {
