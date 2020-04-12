@@ -127,6 +127,7 @@ public class SnipPanel extends PluginPanel {
         c.gridy++;
 
         OutputField.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        OutputField.setEditable(false);
         OutputField.setLineWrap(true);
         OutputField.setWrapStyleWord(true);
         OutputField.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, 30));
