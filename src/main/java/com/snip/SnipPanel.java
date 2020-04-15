@@ -1,22 +1,32 @@
 package com.snip;
 
+import javafx.scene.input.ClipboardContent;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.net.URL;
+import java.lang.*;
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 
 public class SnipPanel extends PluginPanel {
@@ -33,9 +43,12 @@ public class SnipPanel extends PluginPanel {
     private JTextArea firstBar;
     private JTextArea secondBar;
     private JTextArea OutputField = new JTextArea(Output);
+    @Inject
+    private SnipConfig config;
 
     public SnipPanel(SnipConfig config, Client client) {
         this.client = client;
+        this.config = config;
         // this may or may not qualify as a hack
         // but this lets the editor pane expand to fill the whole parent panel
         /*
@@ -43,6 +56,7 @@ public class SnipPanel extends PluginPanel {
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setLayout(new GridBagLayout());
         */
+
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
@@ -127,7 +141,6 @@ public class SnipPanel extends PluginPanel {
         c.gridy++;
 
         OutputField.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        OutputField.setEditable(false);
         OutputField.setLineWrap(true);
         OutputField.setWrapStyleWord(true);
         OutputField.setMinimumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, 30));
@@ -230,7 +243,7 @@ public class SnipPanel extends PluginPanel {
 
     private void makeImage(String chat) throws IOException {
 
-        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>").replaceAll("<img=\\d*>", "");
+        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>");//.replaceAll("<img=\\d*>", "");
         String newerTranscript = "";
         String[] newSplit = newTranscript.split("<br>");
         for (int x = 0; x < newSplit.length; x++) {
@@ -241,37 +254,54 @@ public class SnipPanel extends PluginPanel {
             }
             if (x != newSplit.length - 1)
                 newSplit[x] += "<br>";
+            if(newSplit[x].contains("<img=")) {
+                ArrayList<String> newerSplit=new ArrayList<String>();
+                int lastChecked=0;
+                for(int y=0; y<StringUtils.countMatches(newSplit[x],"<img="); y++){
+                    String toCheck=newSplit[x].substring(lastChecked);
+                    lastChecked+=toCheck.indexOf("<img=")+1;
+                    toCheck=toCheck.substring(toCheck.indexOf("<img="));
+                    newerSplit.add(toCheck.substring(5,toCheck.indexOf(">")));
+
+                }
+                for(int y=0; y<newerSplit.size(); y++){
+                    System.out.println(newerSplit.get(y));
+                    URL path = getClass().getResource("/"+newerSplit.get(y)+".png");
+                    String path2;
+                    if(path!=null) {
+                        path2 = path.toString();
+                        newSplit[x]=newSplit[x].replaceFirst("<img=\\d*>", "<img src=\"" + path2 +"\">");
+                    }else{
+                        newSplit[x]=newSplit[x].replaceFirst("<img=\\d*>", "");
+                    }
+                }
+                /*
+                String img = "";
+                String img2 = "";
+                img = newSplit[x].substring(newSplit[x].indexOf("<img=") + 5);
+                if (newSplit[x].indexOf("<img=") != newSplit[x].lastIndexOf("<img=")) {
+                    img2 = img.substring(newSplit[x].indexOf("<img=") + 5);
+                    img = img.substring(0, img.indexOf(">"));
+                    img2 = img2.substring(0, img.indexOf(">"));
+                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img src=\"../resources/" + img + ".png\">");
+                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img src=\"../resources/" + img2 + ".png\">");
+                } else {
+                    img = img.substring(0, img.indexOf(">"));
+                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img=" + img + ">");
+                }
+                 */
+            };
             newerTranscript += newSplit[x];
         }
-        /* At some point I'll revisit this to get images working but til then not my problem
-
-        if(newTranscript.contains("<img=")) {
-            String img="";
-            String img2="";
-            img=newTranscript.substring(newTranscript.indexOf("<img=")+5);
-            if(newTranscript.indexOf("<img=")!=newTranscript.lastIndexOf("<img="))
-            {
-                img2=img.substring(newTranscript.indexOf("<img=")+5);
-                img=img.substring(0,img.indexOf(">"));
-                img2=img2.substring(0,img.indexOf(">"));
-                newTranscript=newTranscript.replaceFirst("<img=\\d*>","<img src=\"../resources/"+img+".png\">");
-                newTranscript=newTranscript.replaceFirst("<img=\\d*>","<img src=\"../resources/"+img2+".png\">");
-            }else{
-                img=img.substring(0,img.indexOf(">"));
-                newTranscript=newTranscript.replaceFirst("<img=\\d*>","<img="WHY DOESNT THIS WORK">");
-            }
-            System.out.println(newTranscript);
-        }
-         */
-        JLabel label = new JLabel("<html>" + newerTranscript + "</html>");
+        JLabel label = new JLabel("<html>" + newerTranscript.replaceAll(" ","&nbsp;") + "</html>");
         label.setBackground(new Color(208, 188, 157));
         label.setForeground(Color.BLACK);
         label.setOpaque(true);
         int width = label.getPreferredSize().width;
         int height = label.getPreferredSize().height;
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bufferedImage = new BufferedImage(width+1, height+3, BufferedImage.TYPE_INT_ARGB);
         Graphics g2d = bufferedImage.createGraphics();
-        SwingUtilities.paintComponent(g2d, label, new CellRendererPane(), 0, 0, width, height);
+        SwingUtilities.paintComponent(g2d, label, new CellRendererPane(), 1, 0, width, height);
         g2d.dispose();
         File parentFolder = new File(SCREENSHOT_DIR, "Transcripts");
         parentFolder.mkdirs();
@@ -279,13 +309,51 @@ public class SnipPanel extends PluginPanel {
         try {
             ImageIO.write(bufferedImage, "png", file);
             OutputField.setText("Transcript saved to Screenshots folder.");
-            firstBar.setText(First);
-            firstBar.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
-            secondBar.setText(Second);
-            secondBar.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+            if(config.clipboard()){
+                TransferableImage trans = new TransferableImage( bufferedImage );
+                Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+                c.setContents( trans, null );
+            }
+            if(config.postOpen()){
+                Desktop.getDesktop().open(file);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+    private class TransferableImage implements Transferable {
+
+        Image i;
+
+        public TransferableImage( Image i ) {
+            this.i = i;
+        }
+
+        public Object getTransferData( DataFlavor flavor )
+                throws UnsupportedFlavorException, IOException {
+            if ( flavor.equals( DataFlavor.imageFlavor ) && i != null ) {
+                return i;
+            }
+            else {
+                throw new UnsupportedFlavorException( flavor );
+            }
+        }
+
+        public DataFlavor[] getTransferDataFlavors() {
+            DataFlavor[] flavors = new DataFlavor[ 1 ];
+            flavors[ 0 ] = DataFlavor.imageFlavor;
+            return flavors;
+        }
+
+        public boolean isDataFlavorSupported( DataFlavor flavor ) {
+            DataFlavor[] flavors = getTransferDataFlavors();
+            for ( int i = 0; i < flavors.length; i++ ) {
+                if ( flavor.equals( flavors[ i ] ) ) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
