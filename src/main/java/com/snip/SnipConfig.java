@@ -4,16 +4,35 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("example")
+@ConfigGroup("Chat Transcripts")
 public interface SnipConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+		keyName = "location",
+		name = "Side Panel Location",
+		description = "Determines the location of the icon in the side panel."
 	)
-	default String greeting()
+	default int location()
 	{
-		return "Hello";
+		return 15;
 	}
+	@ConfigItem(
+			keyName = "clipboard",
+			name = "Copy to clipboard",
+			description = "Copies the image to clipboard after generating."
+	)
+	default boolean clipboard()
+	{
+		return true;
+	}
+	@ConfigItem(
+			keyName = "open",
+			name = "Open after generation",
+			description = "Opens the transcript image after creation."
+	)
+	default boolean postOpen()
+	{
+		return true;
+	}
+
 }
