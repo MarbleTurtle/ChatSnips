@@ -1,6 +1,5 @@
 package com.snip;
 
-import javafx.scene.input.ClipboardContent;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.ColorScheme;
@@ -20,7 +19,6 @@ import java.awt.event.FocusListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -275,22 +273,7 @@ public class SnipPanel extends PluginPanel {
                         newSplit[x]=newSplit[x].replaceFirst("<img=\\d*>", "");
                     }
                 }
-                /*
-                String img = "";
-                String img2 = "";
-                img = newSplit[x].substring(newSplit[x].indexOf("<img=") + 5);
-                if (newSplit[x].indexOf("<img=") != newSplit[x].lastIndexOf("<img=")) {
-                    img2 = img.substring(newSplit[x].indexOf("<img=") + 5);
-                    img = img.substring(0, img.indexOf(">"));
-                    img2 = img2.substring(0, img.indexOf(">"));
-                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img src=\"../resources/" + img + ".png\">");
-                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img src=\"../resources/" + img2 + ".png\">");
-                } else {
-                    img = img.substring(0, img.indexOf(">"));
-                    newSplit[x] = newSplit[x].replaceFirst("<img=\\d*>", "<img=" + img + ">");
-                }
-                 */
-            };
+            }
             newerTranscript += newSplit[x];
         }
         JLabel label = new JLabel("<html>" + newerTranscript.replaceAll(" ","&nbsp;") + "</html>");
