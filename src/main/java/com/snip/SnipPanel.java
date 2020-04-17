@@ -43,7 +43,6 @@ public class SnipPanel extends PluginPanel {
     private JTextArea OutputField = new JTextArea(Output);
     @Inject
     private SnipConfig config;
-
     public SnipPanel(SnipConfig config, Client client) {
         this.client = client;
         this.config = config;
@@ -263,7 +262,6 @@ public class SnipPanel extends PluginPanel {
 
                 }
                 for(int y=0; y<newerSplit.size(); y++){
-                    System.out.println(newerSplit.get(y));
                     URL path = getClass().getResource("/"+newerSplit.get(y)+".png");
                     String path2;
                     if(path!=null) {
