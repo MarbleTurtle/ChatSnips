@@ -32,10 +32,10 @@ public class SnipPanel extends PluginPanel {
     JButton imageButton = new JButton("Generate Image");
     @Inject
     private Client client;
-    private String First = "Full line of starting message.";
-    private String Second = "Full line of ending message.";
-    private String Error = "Please check that both lines match messages in chat box. Ranks/ Irons/ Mods/ Emojis are not detected [WIP].";
-    private String Output = "Waiting to generate transcript.";
+    private String First = "Line of starting message.";
+    private String Second = "Line of ending message.";
+    private String Error = "Please check that both lines match messages in chat box. Ranks/ Irons/ Mod status/ Emojis are not detected.";
+    private String Output = "\nWaiting to generate transcript. \n\nQuick Commands: \n\nTo generate a transcript of the entire chat use ^all and all$ as the starting and ending messages. \n\nIf you have the starting line you can use +# (ex \"+3\") as the end line to make a transcript of that many extra lines.\n";
     private Boolean Ready = false;
     private String Transcript;
     private JTextArea firstBar;
@@ -146,7 +146,7 @@ public class SnipPanel extends PluginPanel {
 
         JPanel imagePanel = new JPanel();
         imagePanel.setLayout(new BorderLayout());
-        imageButton.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+        imageButton.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         imageButton.setFocusPainted(false);
         imageButton.addActionListener((event) ->
         {
@@ -186,9 +186,13 @@ public class SnipPanel extends PluginPanel {
             Boolean first = false;
             Boolean last = false;
             Transcript = "";
+            int stopAt=-1;
+            int counter=1;
             if (start.equals("^all") && end.equals("all$")) {
                 first = true;
                 last = true;
+            }else if(end.matches("^\\+\\d+$")){
+                stopAt=Integer.parseInt(end.replace("+",""));
             }
             for (int x = Testing.length - 1; x >= 0; x--) {
                 if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty()
@@ -212,7 +216,7 @@ public class SnipPanel extends PluginPanel {
                     if (finalSplit.trim().toLowerCase().endsWith(start.toLowerCase())) {
                         first = true;
                     }
-                    if (first && finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())) {
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter==stopAt)) {
                         out += finalSplit;
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
                         last = true;
@@ -221,6 +225,9 @@ public class SnipPanel extends PluginPanel {
                     if (!finalSplit.isEmpty() && first) {
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
                         out += finalSplit + "\n";
+                        if(stopAt!=0){
+                            counter++;
+                        }
                     }
                 }
             }
@@ -230,11 +237,9 @@ public class SnipPanel extends PluginPanel {
                 Output = out;
                 OutputField.setText(Output);
                 Ready = true;
-                imageButton.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
                 return (true);
             }
         }
-        imageButton.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
         return (false);
     }
 
