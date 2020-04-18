@@ -118,6 +118,7 @@ public class SnipPanel extends PluginPanel {
         refreshPanel.setLayout(new BorderLayout());
         JButton refreshButton = new JButton("Generate Transcript");
         refreshButton.setFocusPainted(false);
+        refreshButton.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         refreshButton.addActionListener((event) ->
         {
             String startPoint = firstBar.getText();
