@@ -35,7 +35,9 @@ public class SnipPanel extends PluginPanel {
     private String First = "Line of starting message.";
     private String Second = "Line of ending message.";
     private String Error = "Please check that both lines match messages in chat box. Ranks/ Irons/ Mod status/ Emojis are not detected.";
-    private String Output = "\nWaiting to generate transcript. \n\nQuick Commands: \n\nTo generate a transcript of the entire chat use ^all and all$ as the starting and ending messages. \n\nIf you have the starting line you can use +# (ex \"+3\") as the end line to make a transcript of that many extra lines. this will error if you try to use too many lines.\n";
+    private String Output = "\nWaiting to generate transcript. \n\nQuick Commands: \n\nTo generate a transcript of the entire chat use ^all and all$ as the starting and " +
+            "ending messages. \n\nIf you have the starting line you can use +# (ex \"+3\") as the end line to make a transcript of that many extra lines. this will error " +
+            "if you try to use too many lines.\n";
     private Boolean Ready = false;
     private String Transcript;
     private JTextArea firstBar;
@@ -213,11 +215,12 @@ public class SnipPanel extends PluginPanel {
                         for (String hold : tempSplit.split("<img=\\d{1,3}>")) {
                             finalSplit += hold.trim();
                         }
+                        finalSplit=finalSplit.replaceAll("<lt>","<").replaceAll("<gt>",">");
                     }
                     if (finalSplit.trim().toLowerCase().endsWith(start.toLowerCase())) {
                         first = true;
                     }
-                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter==stopAt)) {
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter>stopAt)) {
                         out += finalSplit;
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
                         last = true;
@@ -246,7 +249,7 @@ public class SnipPanel extends PluginPanel {
 
     private void makeImage(String chat) throws IOException {
 
-        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>");//.replaceAll("<img=\\d*>", "");
+        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>").replaceAll("<lt>","\\&lt;").replaceAll("<gt>","\\>");//.replaceAll("<img=\\d*>", "");
         String newerTranscript = "";
         String[] newSplit = newTranscript.split("<br>");
         for (int x = 0; x < newSplit.length; x++) {
