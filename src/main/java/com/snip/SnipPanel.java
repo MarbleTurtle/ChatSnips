@@ -190,7 +190,7 @@ public class SnipPanel extends PluginPanel {
             Boolean last = false;
             Transcript = "";
             int stopAt=-1;
-            int counter=1;
+            int counter=0;
             if (start.equals("^all") && end.equals("all$")) {
                 first = true;
                 last = true;
@@ -220,7 +220,7 @@ public class SnipPanel extends PluginPanel {
                     if (finalSplit.trim().toLowerCase().endsWith(start.toLowerCase())) {
                         first = true;
                     }
-                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter>stopAt)) {
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter==stopAt)) {
                         out += finalSplit;
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
                         last = true;
@@ -229,7 +229,7 @@ public class SnipPanel extends PluginPanel {
                     if (!finalSplit.isEmpty() && first) {
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
                         out += finalSplit + "\n";
-                        if(stopAt!=0){
+                        if(stopAt!=-1){
                             counter++;
                         }
                     }
