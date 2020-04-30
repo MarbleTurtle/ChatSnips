@@ -10,7 +10,8 @@ public interface SnipConfig extends Config
 	@ConfigItem(
 		keyName = "location",
 		name = "Side Panel Location",
-		description = "Determines the location of the icon in the side panel."
+		description = "Determines the location of the icon in the side panel.",
+		position = 1
 	)
 	default int location()
 	{
@@ -19,16 +20,28 @@ public interface SnipConfig extends Config
 	@ConfigItem(
 			keyName = "clipboard",
 			name = "Copy to clipboard",
-			description = "Copies the image to clipboard after generating."
+			description = "Copies the image to clipboard after generating.",
+			position = 4
 	)
 	default boolean clipboard()
 	{
 		return true;
 	}
 	@ConfigItem(
+			keyName = "save",
+			name = "Save after generation",
+			description = "Saves the transcript image after creation.",
+			position = 2
+	)
+	default boolean saveImage()
+	{
+		return true;
+	}
+	@ConfigItem(
 			keyName = "open",
-			name = "Open after generation",
-			description = "Opens the transcript image after creation."
+			name = "Open after saving",
+			description = "Opens the image after saving.",
+			position = 3
 	)
 	default boolean postOpen()
 	{
