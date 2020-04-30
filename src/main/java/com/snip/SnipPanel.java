@@ -1,7 +1,9 @@
 package com.snip;
 
+import net.runelite.api.ClanMemberRank;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.game.ClanManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import org.apache.commons.lang3.StringUtils;
@@ -45,9 +47,13 @@ public class SnipPanel extends PluginPanel {
     private JTextArea OutputField = new JTextArea(Output);
     @Inject
     private SnipConfig config;
-    public SnipPanel(SnipConfig config, Client client) {
+    @Inject
+    private ClanManager clanManager;
+
+    public SnipPanel(SnipConfig config, Client client, ClanManager clanManager) {
         this.client = client;
         this.config = config;
+        this.clanManager = clanManager;
         // this may or may not qualify as a hack
         // but this lets the editor pane expand to fill the whole parent panel
         /*
@@ -268,10 +274,14 @@ public class SnipPanel extends PluginPanel {
                     lastChecked+=toCheck.indexOf("<img=")+1;
                     toCheck=toCheck.substring(toCheck.indexOf("<img="));
                     newerSplit.add(toCheck.substring(5,toCheck.indexOf(">")));
-
                 }
                 for(int y=0; y<newerSplit.size(); y++){
-                    URL path = getClass().getResource("/"+newerSplit.get(y)+".png");
+                    //it aint pretty but its worked every time I've tried it
+                    int url=Integer.valueOf(newerSplit.get(y));
+                    if(url>10){
+                        url-=(clanManager.getIconNumber(ClanMemberRank.OWNER)-27);
+                    }
+                    URL path = getClass().getResource("/"+url+".png");
                     String path2;
                     if(path!=null) {
                         path2 = path.toString();
@@ -297,15 +307,18 @@ public class SnipPanel extends PluginPanel {
         parentFolder.mkdirs();
         File file = new File(parentFolder, client.getLocalPlayer().getName() + format(new Date()) + ".png");
         try {
-            ImageIO.write(bufferedImage, "png", file);
-            OutputField.setText("Transcript saved to Screenshots folder.");
             if(config.clipboard()){
                 TransferableImage trans = new TransferableImage( bufferedImage );
                 Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
                 c.setContents( trans, null );
+                OutputField.setText("Transcript saved to clipboard.");
             }
-            if(config.postOpen()){
-                Desktop.getDesktop().open(file);
+            if(config.saveImage()) {
+                ImageIO.write(bufferedImage, "png", file);
+                OutputField.setText("Transcript saved to Screenshots folder.");
+                if(config.postOpen()){
+                    Desktop.getDesktop().open(file);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
