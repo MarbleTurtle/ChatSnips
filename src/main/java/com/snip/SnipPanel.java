@@ -294,7 +294,7 @@ public class SnipPanel extends PluginPanel {
             newerTranscript += newSplit[x];
         }
         JLabel label = new JLabel("<html>" + newerTranscript.replaceAll(" ","&nbsp;") + "</html>");
-        label.setBackground(new Color(208, 188, 157));
+        label.setBackground(config.BgColor());
         label.setForeground(Color.BLACK);
         label.setOpaque(true);
         int width = label.getPreferredSize().width;
