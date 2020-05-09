@@ -6,6 +6,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.game.ClanManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.Text;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.imageio.ImageIO;
@@ -54,13 +55,6 @@ public class SnipPanel extends PluginPanel {
         this.client = client;
         this.config = config;
         this.clanManager = clanManager;
-        // this may or may not qualify as a hack
-        // but this lets the editor pane expand to fill the whole parent panel
-        /*
-        setBorder(new EmptyBorder(18, 10, 0, 10));
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
-        setLayout(new GridBagLayout());
-        */
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -70,6 +64,7 @@ public class SnipPanel extends PluginPanel {
         c.weighty = 0;
         c.insets = new Insets(0, 0, 10, 0);
 
+        //Start text box
         firstBar = new JTextArea(First);
         firstBar.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
         firstBar.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -96,6 +91,7 @@ public class SnipPanel extends PluginPanel {
         add(firstBar, c);
         c.gridy++;
 
+        //End text box
         secondBar = new JTextArea(Second);
         secondBar.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
         secondBar.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -122,6 +118,7 @@ public class SnipPanel extends PluginPanel {
         add(secondBar, c);
         c.gridy++;
 
+        //Generate Transcript button
         JPanel refreshPanel = new JPanel();
         refreshPanel.setLayout(new BorderLayout());
         JButton refreshButton = new JButton("Generate Transcript");
@@ -129,6 +126,7 @@ public class SnipPanel extends PluginPanel {
         refreshButton.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         refreshButton.addActionListener((event) ->
         {
+            //Code ran if the button is pressed
             String startPoint = firstBar.getText();
             String endPoint = secondBar.getText();
             if (startPoint.equals(First) || endPoint.equals(Second)) {
@@ -136,7 +134,7 @@ public class SnipPanel extends PluginPanel {
                 OutputField.setText(Output);
                 return;
             }
-            if (!scrubChat(startPoint.trim(), endPoint.trim())) {
+            if (!scrubChat(startPoint, endPoint)) {
                 Output = Error;
                 OutputField.setText(Output);
                 return;
@@ -146,6 +144,7 @@ public class SnipPanel extends PluginPanel {
         add(refreshPanel, c);
         c.gridy++;
 
+        //Output field
         OutputField.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         OutputField.setLineWrap(true);
         OutputField.setWrapStyleWord(true);
@@ -153,12 +152,14 @@ public class SnipPanel extends PluginPanel {
         add(OutputField, c);
         c.gridy++;
 
+        //Generate Image button
         JPanel imagePanel = new JPanel();
         imagePanel.setLayout(new BorderLayout());
         imageButton.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         imageButton.setFocusPainted(false);
         imageButton.addActionListener((event) ->
         {
+            //Code ran if the button is pressed
             if (Ready) {
                 try {
                     makeImage(Transcript);
@@ -173,7 +174,7 @@ public class SnipPanel extends PluginPanel {
 
 
     }
-
+    //Only used for saving the image
     static String format(Date date) {
         synchronized (TIME_FORMAT) {
             return TIME_FORMAT.format(date);
@@ -198,17 +199,20 @@ public class SnipPanel extends PluginPanel {
             int stopAt=-1;
             int counter=0;
             if (start.equals("^all") && end.equals("all$")) {
+                //used to transcribe the entire chat
                 first = true;
                 last = true;
             }else if(end.matches("^\\+\\d+$")){
+                //used to transcribe N messages after starting message
                 stopAt=Integer.parseInt(end.replace("+",""));
             }
             for (int x = Testing.length - 1; x >= 0; x--) {
+                //Only detects messages where 2 widgets are next to each other and both are not empty which is only true for player messages
                 if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty()
                         && (Testing[x].getRelativeY() == Testing[x + 1].getRelativeY())) {
                     check = Testing[x].getText() + " " + Testing[x + 1].getText();
-
                     if (check.split("<col=.{6}>").length > 0) {
+                        //removes various tags from the message for detection and showing in the side panel
                         temp = "";
                         tempSplit = "";
                         finalSplit = "";
@@ -219,19 +223,23 @@ public class SnipPanel extends PluginPanel {
                             tempSplit += hold;
                         }
                         for (String hold : tempSplit.split("<img=\\d{1,3}>")) {
-                            finalSplit += hold.trim();
+                            finalSplit += hold;
                         }
                         finalSplit=finalSplit.replaceAll("<lt>","<").replaceAll("<gt>",">");
+                        //Replaces the less than and greater than tags to their proper characters for detection and showing in side panel
                     }
-                    if (finalSplit.trim().toLowerCase().endsWith(start.toLowerCase())) {
+                    //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the start input
+                    if (finalSplit.trim().toLowerCase().endsWith(start.trim().toLowerCase())||Text.removeTags(check.trim().toLowerCase()).endsWith(start.toLowerCase())) {
                         first = true;
                     }
-                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.toLowerCase())||counter==stopAt)) {
+                    //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the end input
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.trim().toLowerCase())||Text.removeTags(check.trim().toLowerCase()).endsWith(end.toLowerCase())||counter==stopAt)) {
                         out += finalSplit;
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
                         last = true;
                         break;
                     }
+                    //If the line is not empty adds to transcript
                     if (!finalSplit.isEmpty() && first) {
                         Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
                         out += finalSplit + "\n";
@@ -241,6 +249,7 @@ public class SnipPanel extends PluginPanel {
                     }
                 }
             }
+            //If the ending is found sets the side panel to show the messages found
             if (!out.isEmpty() && last) {
                 if (start.equals("^all") && end.equals("all$"))
                     out = out.substring(0, out.lastIndexOf("\n"));
@@ -254,11 +263,13 @@ public class SnipPanel extends PluginPanel {
     }
 
     private void makeImage(String chat) throws IOException {
-
+        //Converts chat tags to html equivalents
         String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>").replaceAll("<lt>","\\&lt;").replaceAll("<gt>","\\>");//.replaceAll("<img=\\d*>", "");
         String newerTranscript = "";
+        //Splits the transcript by line breaks to do more logic
         String[] newSplit = newTranscript.split("<br>");
         for (int x = 0; x < newSplit.length; x++) {
+            //"Ensures" no color bleeds by adding </font color> for every <font color= found
             if (newSplit[x].split("<font color=#.{6}>").length != newSplit[x].split("</font color>").length) {
                 for (int y = 0; y < newSplit[x].split("<font color=#.{6}>").length - newSplit[x].split("</font color>").length; y++) {
                     newSplit[x] += "</font color>";
@@ -269,6 +280,7 @@ public class SnipPanel extends PluginPanel {
             if(newSplit[x].contains("<img=")) {
                 ArrayList<String> newerSplit=new ArrayList<String>();
                 int lastChecked=0;
+                //Rips out the number id from the <img> tag
                 for(int y=0; y<StringUtils.countMatches(newSplit[x],"<img="); y++){
                     String toCheck=newSplit[x].substring(lastChecked);
                     lastChecked+=toCheck.indexOf("<img=")+1;
@@ -276,7 +288,7 @@ public class SnipPanel extends PluginPanel {
                     newerSplit.add(toCheck.substring(5,toCheck.indexOf(">")));
                 }
                 for(int y=0; y<newerSplit.size(); y++){
-                    //it aint pretty but its worked every time I've tried it
+                    //Uses the previously found number to determine if the img is one that should be shown (currently limited to offical icons only [no emojis])
                     int url=Integer.valueOf(newerSplit.get(y));
                     if(url>10){
                         url-=(clanManager.getIconNumber(ClanMemberRank.OWNER)-27);
@@ -293,6 +305,7 @@ public class SnipPanel extends PluginPanel {
             }
             newerTranscript += newSplit[x];
         }
+        //Wraps it all nicely in html and converts spaces to "spaces" so that q p W aren't ruined
         JLabel label = new JLabel("<html>" + newerTranscript.replaceAll(" ","&nbsp;") + "</html>");
         label.setBackground(config.BgColor());
         label.setForeground(Color.BLACK);
@@ -307,12 +320,14 @@ public class SnipPanel extends PluginPanel {
         parentFolder.mkdirs();
         File file = new File(parentFolder, client.getLocalPlayer().getName() + format(new Date()) + ".png");
         try {
+            //Copies the image to clipboard
             if(config.clipboard()){
                 TransferableImage trans = new TransferableImage( bufferedImage );
                 Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
                 c.setContents( trans, null );
                 OutputField.setText("Transcript saved to clipboard.");
             }
+            //Saves the image and if chosen opens it once saved
             if(config.saveImage()) {
                 ImageIO.write(bufferedImage, "png", file);
                 OutputField.setText("Transcript saved to Screenshots folder.");
@@ -326,7 +341,7 @@ public class SnipPanel extends PluginPanel {
 
     }
     private class TransferableImage implements Transferable {
-
+        //IDK some stuff I found that works
         Image i;
 
         public TransferableImage( Image i ) {
