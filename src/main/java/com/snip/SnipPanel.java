@@ -1,9 +1,9 @@
 package com.snip;
 
-import net.runelite.api.ClanMemberRank;
 import net.runelite.api.Client;
+import net.runelite.api.FriendsChatRank;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.game.ClanManager;
+import net.runelite.client.game.FriendChatManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.Text;
@@ -49,12 +49,12 @@ public class SnipPanel extends PluginPanel {
     @Inject
     private SnipConfig config;
     @Inject
-    private ClanManager clanManager;
+    private FriendChatManager friendChatManager;
 
-    public SnipPanel(SnipConfig config, Client client, ClanManager clanManager) {
+    public SnipPanel(SnipConfig config, Client client, FriendChatManager friendChatManager) {
         this.client = client;
         this.config = config;
-        this.clanManager = clanManager;
+        this.friendChatManager = friendChatManager;
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -291,7 +291,8 @@ public class SnipPanel extends PluginPanel {
                     //Uses the previously found number to determine if the img is one that should be shown (currently limited to offical icons only [no emojis])
                     int url=Integer.valueOf(newerSplit.get(y));
                     if(url>10){
-                        url-=(clanManager.getIconNumber(ClanMemberRank.OWNER)-27);
+                        url-=(friendChatManager.getIconNumber(FriendsChatRank.OWNER)-27);
+
                     }
                     URL path = getClass().getResource("/"+url+".png");
                     String path2;
