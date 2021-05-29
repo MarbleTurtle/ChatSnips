@@ -3,7 +3,7 @@ package com.snip;
 import net.runelite.api.Client;
 import net.runelite.api.FriendsChatRank;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.game.FriendChatManager;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.Text;
@@ -48,13 +48,10 @@ public class SnipPanel extends PluginPanel {
     private JTextArea OutputField = new JTextArea(Output);
     @Inject
     private SnipConfig config;
-    @Inject
-    private FriendChatManager friendChatManager;
 
-    public SnipPanel(SnipConfig config, Client client, FriendChatManager friendChatManager) {
+    public SnipPanel(SnipConfig config, Client client) {
         this.client = client;
         this.config = config;
-        this.friendChatManager = friendChatManager;
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -184,7 +181,7 @@ public class SnipPanel extends PluginPanel {
     private Boolean scrubChat(String start, String end) {
         Ready = false;
         if (client.getWidget(162, 59) != null) {
-            Widget[] Testing = client.getWidget(162, 59).getDynamicChildren();
+            Widget[] Testing = client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES).getDynamicChildren();
             if (Testing.length == 0) {
                 return (false);
             }
@@ -196,21 +193,25 @@ public class SnipPanel extends PluginPanel {
             Boolean first = false;
             Boolean last = false;
             Transcript = "";
-            int stopAt=-1;
-            int counter=0;
+            int stopAt = -1;
+            int counter = 0;
+            Boolean clanMessage = false;
             if (start.equals("^all") && end.equals("all$")) {
                 //used to transcribe the entire chat
                 first = true;
                 last = true;
-            }else if(end.matches("^\\+\\d+$")){
+            } else if (end.matches("^\\+\\d+$")) {
                 //used to transcribe N messages after starting message
-                stopAt=Integer.parseInt(end.replace("+",""));
+                stopAt = Integer.parseInt(end.replace("+", ""));
             }
-            for (int x = Testing.length - 1; x >= 0; x--) {
+            for (int x = Testing.length - 4; x >= 0; x-=4) {
                 //Only detects messages where 2 widgets are next to each other and both are not empty which is only true for player messages
-                if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty()
-                        && (Testing[x].getRelativeY() == Testing[x + 1].getRelativeY())) {
+                if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty() && !Testing[x].isSelfHidden()) {
                     check = Testing[x].getText() + " " + Testing[x + 1].getText();
+                    if (!Testing[x + 2].getText().isEmpty()) {
+                        check = Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText();
+                        clanMessage = true;
+                    }
                     if (check.split("<col=.{6}>").length > 0) {
                         //removes various tags from the message for detection and showing in the side panel
                         temp = "";
@@ -225,25 +226,33 @@ public class SnipPanel extends PluginPanel {
                         for (String hold : tempSplit.split("<img=\\d{1,3}>")) {
                             finalSplit += hold;
                         }
-                        finalSplit=finalSplit.replaceAll("<lt>","<").replaceAll("<gt>",">");
+                        finalSplit = finalSplit.replaceAll("<lt>", "<").replaceAll("<gt>", ">");
                         //Replaces the less than and greater than tags to their proper characters for detection and showing in side panel
                     }
                     //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the start input
-                    if (finalSplit.trim().toLowerCase().endsWith(start.trim().toLowerCase())||Text.removeTags(check.trim().toLowerCase()).endsWith(start.toLowerCase())) {
+                    if (finalSplit.trim().toLowerCase().endsWith(start.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(start.toLowerCase())) {
                         first = true;
                     }
                     //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the end input
-                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.trim().toLowerCase())||Text.removeTags(check.trim().toLowerCase()).endsWith(end.toLowerCase())||counter==stopAt)) {
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(end.toLowerCase()) || counter == stopAt)) {
                         out += finalSplit;
-                        Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
+                        if (clanMessage) {
+                            Transcript += Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText();
+                        } else {
+                            Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
+                        }
                         last = true;
                         break;
                     }
                     //If the line is not empty adds to transcript
                     if (!finalSplit.isEmpty() && first) {
-                        Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
+                        if (clanMessage) {
+                            Transcript += Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
+                        } else {
+                            Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
+                        }
                         out += finalSplit + "\n";
-                        if(stopAt!=-1){
+                        if (stopAt != -1) {
                             counter++;
                         }
                     }
@@ -264,7 +273,7 @@ public class SnipPanel extends PluginPanel {
 
     private void makeImage(String chat) throws IOException {
         //Converts chat tags to html equivalents
-        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>").replaceAll("<lt>","\\&lt;").replaceAll("<gt>","\\>");//.replaceAll("<img=\\d*>", "");
+        String newTranscript = Transcript.replaceAll("<col=", "<font color=#").replaceAll("</col>", "</font color>").replaceAll("\n", "<br>").replaceAll("<lt>","\\&lt;").replaceAll("<gt>","\\>").replaceAll("<img=\\d*>", "");
         String newerTranscript = "";
         //Splits the transcript by line breaks to do more logic
         String[] newSplit = newTranscript.split("<br>");
@@ -277,6 +286,7 @@ public class SnipPanel extends PluginPanel {
             }
             if (x != newSplit.length - 1)
                 newSplit[x] += "<br>";
+            /* Yea... not dealing with clan ranks fuck that shit I'm out
             if(newSplit[x].contains("<img=")) {
                 ArrayList<String> newerSplit=new ArrayList<String>();
                 int lastChecked=0;
@@ -291,7 +301,7 @@ public class SnipPanel extends PluginPanel {
                     //Uses the previously found number to determine if the img is one that should be shown (currently limited to offical icons only [no emojis])
                     int url=Integer.valueOf(newerSplit.get(y));
                     if(url>10){
-                        url-=(friendChatManager.getIconNumber(FriendsChatRank.OWNER)-27);
+                        //url-=(friendChatManager.getIconNumber(FriendsChatRank.OWNER)-27);
 
                     }
                     URL path = getClass().getResource("/"+url+".png");
@@ -303,7 +313,9 @@ public class SnipPanel extends PluginPanel {
                         newSplit[x]=newSplit[x].replaceFirst("<img=\\d*>", "");
                     }
                 }
+
             }
+            */
             newerTranscript += newSplit[x];
         }
         //Wraps it all nicely in html and converts spaces to "spaces" so that q p W aren't ruined
