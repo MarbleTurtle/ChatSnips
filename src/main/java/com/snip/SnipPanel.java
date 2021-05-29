@@ -204,74 +204,56 @@ public class SnipPanel extends PluginPanel {
                 //used to transcribe N messages after starting message
                 stopAt = Integer.parseInt(end.replace("+", ""));
             }
-            System.out.println(Testing.length);
-            for (int x = Testing.length - 2; x >= 0; x--) {
+            for (int x = Testing.length - 4; x >= 0; x-=4) {
                 //Only detects messages where 2 widgets are next to each other and both are not empty which is only true for player messages
-                if (Testing[x] != null && Testing[x + 1] != null) {
-                    System.out.println("X: "+x);
-                    System.out.println("Message: "+Testing[x].getText());
-                    System.out.println("Y: "+Testing[x].getRelativeY());
-                    if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty())
-                        System.out.println("This and previous are not empty");
-                    if(Testing[x].getRelativeY() == Testing[x + 1].getRelativeY())
-                        System.out.println("This and previous are on the same height");
-                    if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty()
-                            && (Testing[x].getRelativeY() == Testing[x + 1].getRelativeY())) {
-                        check = Testing[x].getText() + " " + Testing[x + 1].getText();
-                        if(x-1>=0){
-                            if(Testing[x-1].getRelativeY()==Testing[x].getRelativeY()&&Testing[x].getRelativeY()==Testing[x+1].getRelativeY()&&Testing[x-1].getRelativeY()==Testing[x+1].getRelativeY()&&!Testing[x+1].getText().isEmpty()){
-                                check = Testing[x+1].getText()+Testing[x-1].getText() + " " + Testing[x].getText();
-                                x--;
-                                clanMessage=true;
-                            }
+                if (!Testing[x].getText().isEmpty() && !Testing[x + 1].getText().isEmpty() && !Testing[x].isSelfHidden()) {
+                    check = Testing[x].getText() + " " + Testing[x + 1].getText();
+                    if (!Testing[x + 2].getText().isEmpty()) {
+                        check = Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText();
+                        clanMessage = true;
+                    }
+                    if (check.split("<col=.{6}>").length > 0) {
+                        //removes various tags from the message for detection and showing in the side panel
+                        temp = "";
+                        tempSplit = "";
+                        finalSplit = "";
+                        for (String hold : check.split("<col=.{6}>")) {
+                            temp += hold;
                         }
-                        System.out.println(check);
-                        if (check.split("<col=.{6}>").length > 0) {
-                            //removes various tags from the message for detection and showing in the side panel
-                            temp = "";
-                            tempSplit = "";
-                            finalSplit = "";
-                            for (String hold : check.split("<col=.{6}>")) {
-                                temp += hold;
-                            }
-                            for (String hold : temp.split("</col>")) {
-                                tempSplit += hold;
-                            }
-                            for (String hold : tempSplit.split("<img=\\d{1,3}>")) {
-                                finalSplit += hold;
-                            }
-                            finalSplit = finalSplit.replaceAll("<lt>", "<").replaceAll("<gt>", ">");
-                            System.out.println(finalSplit);
-                            //Replaces the less than and greater than tags to their proper characters for detection and showing in side panel
+                        for (String hold : temp.split("</col>")) {
+                            tempSplit += hold;
                         }
-                        //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the start input
-                        if (finalSplit.trim().toLowerCase().endsWith(start.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(start.toLowerCase())) {
-                            first = true;
-                            System.out.println("Breaking in");
+                        for (String hold : tempSplit.split("<img=\\d{1,3}>")) {
+                            finalSplit += hold;
                         }
-                        //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the end input
-                        if (first && (finalSplit.trim().toLowerCase().endsWith(end.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(end.toLowerCase()) || counter == stopAt)) {
-                            out += finalSplit;
-                            if(clanMessage){
-                                Transcript+=Testing[x+2].getText()+Testing[x].getText() + " " + Testing[x + 1].getText();
-                            }else {
-                                Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
-                            }
-                            last = true;
-                            System.out.println("Breaking out");
-                            break;
+                        finalSplit = finalSplit.replaceAll("<lt>", "<").replaceAll("<gt>", ">");
+                        //Replaces the less than and greater than tags to their proper characters for detection and showing in side panel
+                    }
+                    //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the start input
+                    if (finalSplit.trim().toLowerCase().endsWith(start.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(start.toLowerCase())) {
+                        first = true;
+                    }
+                    //Checks for if the revised message or a tagless message (in cases of using right click copy to clipboard) matches the end input
+                    if (first && (finalSplit.trim().toLowerCase().endsWith(end.trim().toLowerCase()) || Text.removeTags(check.trim().toLowerCase()).endsWith(end.toLowerCase()) || counter == stopAt)) {
+                        out += finalSplit;
+                        if (clanMessage) {
+                            Transcript += Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText();
+                        } else {
+                            Transcript += Testing[x].getText() + " " + Testing[x + 1].getText();
                         }
-                        //If the line is not empty adds to transcript
-                        if (!finalSplit.isEmpty() && first) {
-                            if(clanMessage){
-                                Transcript+=Testing[x+2].getText()+Testing[x].getText() + " " + Testing[x + 1].getText()+ "\n";
-                            }else {
-                                Transcript += Testing[x].getText() + " " + Testing[x + 1].getText()+ "\n";
-                            }
-                            out += finalSplit + "\n";
-                            if (stopAt != -1) {
-                                counter++;
-                            }
+                        last = true;
+                        break;
+                    }
+                    //If the line is not empty adds to transcript
+                    if (!finalSplit.isEmpty() && first) {
+                        if (clanMessage) {
+                            Transcript += Testing[x + 2].getText() + Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
+                        } else {
+                            Transcript += Testing[x].getText() + " " + Testing[x + 1].getText() + "\n";
+                        }
+                        out += finalSplit + "\n";
+                        if (stopAt != -1) {
+                            counter++;
                         }
                     }
                 }
@@ -283,7 +265,6 @@ public class SnipPanel extends PluginPanel {
                 Output = out;
                 OutputField.setText(Output);
                 Ready = true;
-                System.out.println("Returning");
                 return (true);
             }
         }
